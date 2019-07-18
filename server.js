@@ -53,15 +53,15 @@ const validateId = (id) => {
 const validatePriority = (priority) => {
   if (Number.isNaN(priority)) {
     return {
-      valid: false,
-      messageObj: {
+      valid1: false,
+      messageObj1: {
       'message': 'Invalid priority provided.',
       'long_message': 'Priority can only be positive integer.',
       },
     };
   }
   return {
-    valid: true,
+    valid1: true,
   }
 }
 
@@ -121,15 +121,43 @@ app.put('/api/v1/clients/:id', (req, res) => {
     res.status(400).send(messageObj);
   }
 
+  const { valid1, messageObj1 } = validatePriority(priority);
+  if (!valid1) {
+    res.status(400).send(messageObj1);
+  }
+
   let { status, priority } = req.body;
   let clients = db.prepare('select * from clients').all();
   const client = clients.find(client => client.id === id);
 
   /* ---------- Update code below ----------*/
 
+  if(priority){
+    const cli = db.prepare('select * from clients where status = ? and priority = ? limit 1').get([status, priority]);
+    
+    if(!cli){
+      const stmt = db.prepare('update clients set priority = ? where id = ?')
+      stmt.run([priority, client.id])
+    } else {
+      if (priority < client.priority){
+        const increment = db.prepare('update clients set priority = priority + 1 where priority >= ? and priority < ?')
+        increment.run([priority, client.priority])
+      } else if (priority > client.priority) {
+        const decrement = db.prepare('update clients set priority = priority - 1 where priority <= ? and priority > ?')
+        decrement.run([priority, client.priority])
+      }
+      const stmt = db.prepare('update clients set priority = ? where id = ?')
+      stmt.run([priority, client.id])
+    } 
+  }
 
+  if(status){
+    const stmt = db.prepare('update clients set status = ? where id = ?')
+    stmt.run([status, client.id])
+  }
 
-  return res.status(200).send(clients);
+  let clis = db.prepare('select * from clients').all();
+  return res.status(200).send(clis);
 });
 
 app.listen(3001);
