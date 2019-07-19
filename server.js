@@ -143,15 +143,20 @@ app.put('/api/v1/clients/:id', (req, res) => {
       stmt.run([priority, client.id])
     } else {
       if (priority < client.priority){
-        const increment = db.prepare('update clients set priority = priority + 1 where priority >= ? and priority < ?')
-        increment.run([priority, client.priority])
-      } else if (priority > client.priority) {
-        const decrement = db.prepare('update clients set priority = priority - 1 where priority <= ? and priority > ?')
-        decrement.run([priority, client.priority])
-      }
-      const stmt = db.prepare('update clients set priority = ? where id = ?')
-      stmt.run([priority, client.id])
+      const increment = db.prepare('update clients set priority = priority + 1 where priority >= ? and priority < ?')
+      increment.run([priority, client.priority])
+    } else if (priority > client.priority) {
+      const decrement = db.prepare('update clients set priority = priority - 1 where priority <= ? and priority > ?')        
+      decrement.run([priority, client.priority])
     } 
+    const stmt = db.prepare('update clients set priority = ? where id = ?')
+    stmt.run([priority, client.id])  
+    }
+  } else {
+    const max = db.prepare('select * from clients where priority= 1 + (select max(priority) from clients where status = ?)').get([status])
+    const setMax = db.prepare('update clients set priority = ? where id = ?')
+    setMax.run([max.priority, client.id])
+    
   }
 
   if(status){
