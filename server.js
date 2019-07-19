@@ -2,8 +2,11 @@ import express from 'express';
 import Database from 'better-sqlite3';
 
 const app = express();
+ 
 
 app.use(express.json());
+
+
 
 app.get('/', (req, res) => {
   return res.status(200).send({'message': 'SHIPTIVITY API. Read documentation to see API docs'});
