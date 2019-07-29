@@ -138,25 +138,45 @@ app.put('/api/v1/clients/:id', (req, res) => {
   if(priority){
     const cli = db.prepare('select * from clients where status = ? and priority = ? limit 1').get([status, priority]);
     
-    if(!cli){
+    if(!cli){ //priority doesn't exist yet
       const stmt = db.prepare('update clients set priority = ? where id = ?')
       stmt.run([priority, client.id])
-    } else {
-      if (priority < client.priority){
-      const increment = db.prepare('update clients set priority = priority + 1 where priority >= ? and priority < ?')
-      increment.run([priority, client.priority])
-    } else if (priority > client.priority) {
-      const decrement = db.prepare('update clients set priority = priority - 1 where priority <= ? and priority > ?')        
-      decrement.run([priority, client.priority])
-    } 
-    const stmt = db.prepare('update clients set priority = ? where id = ?')
-    stmt.run([priority, client.id])  
+    } else if (status === client.status){ //same swimlane
+        if (priority < client.priority){
+          const increment = db.prepare('update clients set priority = priority + 1 where priority >= ? and priority < ?')
+          increment.run([priority, client.priority, ])
+        } else if (priority > client.priority) {
+          const decrement = db.prepare('update clients set priority = priority - 1 where priority <= ? and priority > ?')        
+          decrement.run([priority, client.priority])
+        } 
+      const stmt = db.prepare('update clients set priority = ? where id = ?')
+      stmt.run([priority, client.id])
+        
+    } else { //moving to different swimlane
+        //take sibling priority and increment all above
+        const increment = db.prepare('update clients set priority = priority + 1 where priority >= ? and status = ?')
+        increment.run([priority, status])
+
+        //decrement all priorities above client.priority
+        const decrement = db.prepare('update clients set priority = priority - 1 where priority > ? and status = ?')
+        decrement.run([client.priority, client.status])
+
+        const takeSib = db.prepare('update clients set priority = ? where id = ?')
+        takeSib.run([priority, client.id])
     }
   } else {
     const max = db.prepare('select * from clients where priority= 1 + (select max(priority) from clients where status = ?)').get([status])
     const setMax = db.prepare('update clients set priority = ? where id = ?')
-    setMax.run([max.priority, client.id])
     
+    //decrement all priorities above client.priority
+    const decrement = db.prepare('update clients set priority = priority - 1 where priority > ? and status = ?')
+    decrement.run([client.priority, client.status])
+    
+    if(max){
+      setMax.run([max.priority, client.id])
+    } else {
+      setMax.run([1, client.id])
+    }
   }
 
   if(status){
