@@ -1,0 +1,101 @@
+From c37de1cceb8daeda864549f55e85a73ab29b433b Mon Sep 17 00:00:00 2001
+From: Samik Shrotriya <ss2659@cornell.edu>
+Date: Mon, 29 Jul 2019 16:08:21 -0400
+Subject: [PATCH 9/9] edits to put method and front-end
+
+---
+ clients.db | Bin 8192 -> 8192 bytes
+ server.js  |  44 ++++++++++++++++++++++++++++++++------------
+ 2 files changed, 32 insertions(+), 12 deletions(-)
+
+diff --git a/clients.db b/clients.db
+index a49623208066a2a6b832234e75eedcd59ad63205..abf1284a5e5f68698bcdafdd7939188ddb31ff31 100644
+GIT binary patch
+delta 651
+zcmYjPO>7cD6n+cKu>Xs+dSF?g*%Gz37F%jcG3`<)O=&9vCd31#E37~YyLF+x^ny)l
+zG$uwfi5E}x;?J#T_25yx_v*n!FJ4SMd2&c;LNad-@6G$(_r7m>dQX2Ia8ci01eeKu
+zymcf`bMr9DniJBve2sm}C*(b$#Qo-O2(P$9@fZJ3`Y9c;e}x~cDc+So@(0Hc4j7Jo
+z3FO>d-Bj^dXwg@-+dD0@YtkgS60T^t5S)oMt*ITyt~+L@;~_J)mhu{vb(-BywJ{k<
+zJGRxdB8F9qlvC#rjFmO~Sc#1eHKCjvL3meT@m@HCnPAH6;`X_Hpz(Kg;euNf`G?$R
+z;KCI(!J+FMf{Q5?Z>yK)&)B&5N5J!6;YzfiP`4X|W5>24w>HwHu45YQR?{+Tk)l~|
+z+Ln>`BEW&r2J2m-5kw0bi{s%0({Jww{uEgBv*H8@LXL!xhuBz|Fngkm(?x-_o&@up
+zhZIggct#lh2`!vQ<hdBFXw<shXqj1-z!GI%t8>Fk(kUMyen(~T7iD(!jJYf|Kzsx7
+z%Y(J3qTM#?yQX7A)~xELVHtI^KQ_OvQ7di3sZD0mex&;|egt!C8qO-SBST8MrS~A+
+z2OS?ONd_f(1X@ACdf=+>o>ARy*>#srAxNeb3ikpt@*qhAK$582H<PW}X^FUTYOOGY
+s?ZHojIf}*~!WqV$@*tQd(C<QV{{V#{D9a-Vrb;SyD{%sJ`c*vt0Tx%N+yDRo
+
+delta 447
+zcmZp0XmFSy#l#RgQN{^KZcJFnug|N_Ai`zI!d1b)n?H|Vhi?(zM?NXu`@FMxQ@AX7
+zuJLs9c=2#>ALMT2w&(i8wRdCT7EUp)3WiW?XJy^slEk8H9R(oQ4al9WEoUs8nWtM&
+zl%HOdT3pO#!_CH^94I^aovfZva(-?>PHIUi6R$HP8v{@^=VTo@BW@(+lbfXNIJg~!
+z*%)+#r6(VjH{nl8OwP{9Pv>$FVq-A%l%AX_Ys>=`<FpfGW0<^J)|!*WRe+5_JyMx*
+z@@pAm9whTvCx4N2<Y2MqV`Gqym7bg{X9P2l!;_bd!QNkXvcII*WM+9?M&`-Cr2V<r
+z`S~&!Y=I8uocvx^mmlV0Q!b$Sj?$BRq%>d#usLzEF{lC!T_j`50d*1UWE&|fMwZEM
+zq<pxT`T1TkSZTUTb54$yF=BURWn<6}RGwTbZz6)^KxPIYU{?i71j|@)GC8mS%?t$k
+c!%^CjlgXPI=<HHy#>pEbT^N}r8_EMo0HB6)$p8QV
+
+diff --git a/server.js b/server.js
+index 194b771..aa567bb 100644
+--- a/server.js
++++ b/server.js
+@@ -138,25 +138,45 @@ app.put('/api/v1/clients/:id', (req, res) => {
+   if(priority){
+     const cli = db.prepare('select * from clients where status = ? and priority = ? limit 1').get([status, priority]);
+     
+-    if(!cli){
++    if(!cli){ //priority doesn't exist yet
+       const stmt = db.prepare('update clients set priority = ? where id = ?')
+       stmt.run([priority, client.id])
+-    } else {
+-      if (priority < client.priority){
+-      const increment = db.prepare('update clients set priority = priority + 1 where priority >= ? and priority < ?')
+-      increment.run([priority, client.priority])
+-    } else if (priority > client.priority) {
+-      const decrement = db.prepare('update clients set priority = priority - 1 where priority <= ? and priority > ?')        
+-      decrement.run([priority, client.priority])
+-    } 
+-    const stmt = db.prepare('update clients set priority = ? where id = ?')
+-    stmt.run([priority, client.id])  
++    } else if (status === client.status){ //same swimlane
++        if (priority < client.priority){
++          const increment = db.prepare('update clients set priority = priority + 1 where priority >= ? and priority < ?')
++          increment.run([priority, client.priority, ])
++        } else if (priority > client.priority) {
++          const decrement = db.prepare('update clients set priority = priority - 1 where priority <= ? and priority > ?')        
++          decrement.run([priority, client.priority])
++        } 
++      const stmt = db.prepare('update clients set priority = ? where id = ?')
++      stmt.run([priority, client.id])
++        
++    } else { //moving to different swimlane
++        //take sibling priority and increment all above
++        const increment = db.prepare('update clients set priority = priority + 1 where priority >= ? and status = ?')
++        increment.run([priority, status])
++
++        //decrement all priorities above client.priority
++        const decrement = db.prepare('update clients set priority = priority - 1 where priority > ? and status = ?')
++        decrement.run([client.priority, client.status])
++
++        const takeSib = db.prepare('update clients set priority = ? where id = ?')
++        takeSib.run([priority, client.id])
+     }
+   } else {
+     const max = db.prepare('select * from clients where priority= 1 + (select max(priority) from clients where status = ?)').get([status])
+     const setMax = db.prepare('update clients set priority = ? where id = ?')
+-    setMax.run([max.priority, client.id])
+     
++    //decrement all priorities above client.priority
++    const decrement = db.prepare('update clients set priority = priority - 1 where priority > ? and status = ?')
++    decrement.run([client.priority, client.status])
++    
++    if(max){
++      setMax.run([max.priority, client.id])
++    } else {
++      setMax.run([1, client.id])
++    }
+   }
+ 
+   if(status){
+-- 
+2.17.2 (Apple Git-113)
+

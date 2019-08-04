@@ -1,0 +1,336 @@
+From f133991ef2acab1234352546cc8aaeda97a53c71 Mon Sep 17 00:00:00 2001
+From: Julius Tio <juliusardentio@gmail.com>
+Date: Fri, 8 Feb 2019 18:36:38 +1100
+Subject: [PATCH 3/9] Use sqlite3 for persistence
+
+---
+ README.markdown   |   7 ++++-
+ clients.db        | Bin 0 -> 8192 bytes
+ clients.sql       |  29 ++++++++++++++++++++
+ package-lock.json |  67 +++++++++++++++++++++++++++++++++++++++++++---
+ package.json      |   1 +
+ server.js         |  27 +++++++++++++------
+ 6 files changed, 119 insertions(+), 12 deletions(-)
+ create mode 100644 clients.db
+ create mode 100644 clients.sql
+
+diff --git a/README.markdown b/README.markdown
+index cb847dc..76ccaa3 100644
+--- a/README.markdown
++++ b/README.markdown
+@@ -18,7 +18,7 @@ Try the API by running:
+ ### curl -X GET http://localhost:3001/api/v1/clients/1
+ ### curl -X PUT http://localhost:3001/api/v1/clients/1 -H "Content-Type: application/json" -d '{"status":"in-progress", "priority": 6}'
+ 
+-For this task, you only need to update the API for updating client detail. You do not have to save the data back to db.txt
++For this task, you only need to update the API for updating client detail.
+ 
+ Valid status:
+ - backlog
+@@ -36,3 +36,8 @@ Should insert the client as lowest priority (biggest number) with status complet
+ 
+ Should insert the client at the right priority and reorder the priority in clients with different statuses
+ ### curl -X PUT http://localhost:3001/api/v1/clients/1 -H "Content-Type: application/json" -d '{"status":"complete", "priority": 3}'
++
++## Additional Resources
++Node JS: https://nodejs.org/en/
++Express: https://expressjs.com
++better-sqlite3: https://github.com/JoshuaWise/better-sqlite3/blob/HEAD/docs/api.md
+\ No newline at end of file
+diff --git a/clients.db b/clients.db
+new file mode 100644
+index 0000000000000000000000000000000000000000..8ba54853a51784d74beb91f9096afc1675c427ea
+GIT binary patch
+literal 8192
+zcmeI1&u`;I6vxMD>o#fAEU*%SsA5pHz={}zmPP9FqjiGY%_eEuBunXm!^ECAql{;w
+znQ@!+wp{rWxbc60#6Q86JAVTQ-Z%+_!(NcMtZc=y<IH^Lz0dnTDI@nU+ssfrk}4qv
+zKSKAA<De6a5kgPkEWo)sHsEG+^#!iZ+WpIJpP-Lw7iBxR5+V5HM@}FokQ2xW<OFg8
+zIf0x&P9P_c6UYhV1YTJJFWz#t->g=h?~8^EISo0Z!sz9t(C7vJAix8^-VX5cA^xC*
+zF^h2Xd=Q)kJ$%t?cKqHoZUxsh_(hO};z9830H1f^eBN%`rxDemVpGGU$bPiXv>_(d
+ze}A1SCKWUDm2l}{dH)Y|zckw{%__H*4=cay|Fj?Pzg_;l{9`#Pzqj|>-Vb}v_I7rE
+z-F>lpT>7*0^DA4VJh7ZWP9P_c6UYhV1abm7f&Y_0rQx{f^TuJZZ-|=I@YUG9g(4!t
+z{%|ObX>ciMguC!>HX$7QDzpPalPb!DH&rrLRO>JAyXfe+>U2^y9nWjHO+=iDoKmIc
+zT@@3-?m#A(O*sph!G0LRv>^#6T*kZp8!qztRp+UUCXC*)@XmWm=2Tx;d6Fdd&pPhU
+zwW08CjD@&QLs&oJOwgr7>Ev}6J#JQ=Iup8v2XdY*-{LZy$fht9bPNRGYdue>QC38b
+z%q>wXh2mGQx#-=i1E;R&WJ2*py8-i3X4nnI&ox!vDG3>*)kw9G2~}Lq2{-dlCR0ug
+z-3;!z=>6+M=ZbNjXm5cp%K$R9B6Xm8%OW%OI#MtrA%i7{HIiE=6&HOH96CV)Yp`(a
+z`C^ia2v*L5Xuysoi$2@I08pcdpk_^B^LXDy?|cU+U<HNS?FIxfV#Yg_VX9%xrU(^H
+zKnLpCg?dsA8g{d?WVzEUyXd%k;GDt^MTg@WZYT&?WJIqdAC0<GD!jf-RY>upUKCS7
+z7Yg`_4z=~i63WK;o{PGzDr7@c1VUp1w3br6RDhU{z-3H*O>ZQ>f#}XDjkH%MHqr)}
+zk|E=;Pg;hy{l%_}4lfU!9tFyCuLW36Q)@;Kl9Zz?I|IRlS=k0sa!t)Dn!@7}l*q3-
+zJ(-X=g<+OOhX@kG#8bc(D+#Q@KH0qGqHewDq6Yx9CC40yp247Lk9rLWzM7eo@XXtt
+zlpE#^h@M!N_>h!Iqm{e1j&@x1@T}_e!*QA<UYiU_#3+EY;J_SDX{wmE<_1QbQxUJG
+zZnm~vbk>2W7re9-H5eWzL@Y{Dw<cfn_y8OMMSy}rf%~?$G+qJRIC2+p)FmA!Sw;I&
+zXg>u@XAQE}Wfw$2jB&EWPzbhM^zkJaobU;>gY`Kh34}ACB=Ne+Zl;0bXM^#YAvy%?
+zI$N`+eR+-i2bYJ%!5CZu(`~Ckm>^;sI>J2~FJf;AdCMu-3v8>_B%W=6!P9E-Tyi3;
+z!M|Y|X8aSvr~eA!Op)oBg@i9;z#bzKuISbaE;^tG#VdA4tW+=yVcg5wwP|}jYaNSs
+S<ts?&WD_g`Z2ogjg}(qeX)Blj
+
+literal 0
+HcmV?d00001
+
+diff --git a/clients.sql b/clients.sql
+new file mode 100644
+index 0000000..75c7c50
+--- /dev/null
++++ b/clients.sql
+@@ -0,0 +1,29 @@
++DROP TABLE clients;
++CREATE TABLE IF NOT EXISTS clients (
++  id INTEGER PRIMARY KEY,
++  name TEXT NOT NULL,
++  description TEXT,
++  status TEXT,
++  priority INTEGER
++);
++
++insert into clients values(1,"Stark, White and Abbott", "Cloned Optimal Architecture", "in-progress", 1);
++insert into clients values(2,"Wiza LLC", "Exclusive Bandwidth-Monitored Implementation", "complete", 1);
++insert into clients values(3,"Nolan LLC", "Vision-Oriented 4Thgeneration Graphicaluserinterface", "backlog", 1);
++insert into clients values(4,"Thompson PLC", "Streamlined Regional Knowledgeuser", "in-progress", 2);
++insert into clients values(5,"Walker-Williamson", "Team-Oriented 6Thgeneration Matrix", "in-progress", 3);
++insert into clients values(6,"Boehm and Sons", "Automated Systematic Paradigm", "backlog", 2);
++insert into clients values(7,"Runolfsson, Hegmann and Block", "Integrated Transitional Strategy", "backlog", 3);
++insert into clients values(8,"Schumm-Labadie", "Operative Heuristic Challenge", "backlog", 4);
++insert into clients values(9,"Kohler Group", "Re-Contextualized Multi-Tasking Attitude", "backlog", 5);
++insert into clients values(10,"Romaguera Inc", "Managed Foreground Toolset", "backlog", 6);
++insert into clients values(11,"Reilly-King", "Future-Proofed Interactive Toolset", "complete", 2);
++insert into clients values(12,"Emard, Champlin and Runolfsdottir", "Devolved Needs-Based Capability", "backlog", 7);
++insert into clients values(13,"Fritsch, Cronin and Wolff", "Open-Source 3Rdgeneration Website", "complete", 3);
++insert into clients values(14,"Borer LLC", "Profit-Focused Incremental Orchestration", "backlog", 8);
++insert into clients values(15,"Emmerich-Ankunding", "User-Centric Stable Extranet", "in-progress", 4);
++insert into clients values(16,"Willms-Abbott", "Progressive Bandwidth-Monitored Access", "in-progress", 5);
++insert into clients values(17,"Brekke PLC", "Intuitive User-Facing Customerloyalty", "complete", 4);
++insert into clients values(18,"Bins, Toy and Klocko", "Integrated Assymetric Software", "backlog", 9);
++insert into clients values(19,"Hodkiewicz-Hayes", "Programmable Systematic Securedline", "backlog", 10);
++insert into clients values(20,"Murphy, Lang and Ferry", "Organized Explicit Access", "backlog", 11);
+\ No newline at end of file
+diff --git a/package-lock.json b/package-lock.json
+index f32a4b4..9719cfc 100644
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -1805,6 +1805,15 @@
+         }
+       }
+     },
++    "better-sqlite3": {
++      "version": "5.4.0",
++      "resolved": "https://registry.npmjs.org/better-sqlite3/-/better-sqlite3-5.4.0.tgz",
++      "integrity": "sha512-Uj1ZYOcq1GtFyFgJgqMVDoDLTy1B1pM9+bULnlX8szRX4cPjE/7JbKxCzQGhYlZlLkHQvtXXhCZ3skqsQ2byMA==",
++      "requires": {
++        "integer": "^2.1.0",
++        "tar": "^4.4.6"
++      }
++    },
+     "binary-extensions": {
+       "version": "1.13.0",
+       "resolved": "https://registry.npmjs.org/binary-extensions/-/binary-extensions-1.13.0.tgz",
+@@ -1931,6 +1940,11 @@
+         "readdirp": "^2.0.0"
+       }
+     },
++    "chownr": {
++      "version": "1.1.1",
++      "resolved": "https://registry.npmjs.org/chownr/-/chownr-1.1.1.tgz",
++      "integrity": "sha512-j38EvO5+LHX84jlo6h4UzmOwi0UgW61WRyPtJz4qaadK5eY3BTS5TY/S1Stc3Uk2lIM6TPevAlULiEJwie860g=="
++    },
+     "class-utils": {
+       "version": "0.3.6",
+       "resolved": "https://registry.npmjs.org/class-utils/-/class-utils-0.3.6.tgz",
+@@ -2429,6 +2443,14 @@
+       "resolved": "https://registry.npmjs.org/fresh/-/fresh-0.5.2.tgz",
+       "integrity": "sha1-PYyt2Q2XZWn6g1qx+OSyOhBWBac="
+     },
++    "fs-minipass": {
++      "version": "1.2.5",
++      "resolved": "https://registry.npmjs.org/fs-minipass/-/fs-minipass-1.2.5.tgz",
++      "integrity": "sha512-JhBl0skXjUPCFH7x6x61gQxrKyXsxB5gcgePLZCwfyCGGsTISMoIeObbrvVeP6Xmyaudw4TT43qV2Gz+iyd2oQ==",
++      "requires": {
++        "minipass": "^2.2.1"
++      }
++    },
+     "fs-readdir-recursive": {
+       "version": "1.1.0",
+       "resolved": "https://registry.npmjs.org/fs-readdir-recursive/-/fs-readdir-recursive-1.1.0.tgz",
+@@ -3155,6 +3177,11 @@
+       "resolved": "https://registry.npmjs.org/inherits/-/inherits-2.0.3.tgz",
+       "integrity": "sha1-Yzwsg+PaQqUC9SRmAiSA9CCCYd4="
+     },
++    "integer": {
++      "version": "2.1.0",
++      "resolved": "https://registry.npmjs.org/integer/-/integer-2.1.0.tgz",
++      "integrity": "sha512-vBtiSgrEiNocWvvZX1RVfeOKa2mCHLZQ2p9nkQkQZ/BvEiY+6CcUz0eyjvIiewjJoeNidzg2I+tpPJvpyspL1w=="
++    },
+     "invariant": {
+       "version": "2.2.4",
+       "resolved": "https://registry.npmjs.org/invariant/-/invariant-2.2.4.tgz",
+@@ -3553,8 +3580,24 @@
+     "minimist": {
+       "version": "0.0.8",
+       "resolved": "https://registry.npmjs.org/minimist/-/minimist-0.0.8.tgz",
+-      "integrity": "sha1-hX/Kv8M5fSYluCKCYuhqp6ARsF0=",
+-      "dev": true
++      "integrity": "sha1-hX/Kv8M5fSYluCKCYuhqp6ARsF0="
++    },
++    "minipass": {
++      "version": "2.3.5",
++      "resolved": "https://registry.npmjs.org/minipass/-/minipass-2.3.5.tgz",
++      "integrity": "sha512-Gi1W4k059gyRbyVUZQ4mEqLm0YIUiGYfvxhF6SIlk3ui1WVxMTGfGdQ2SInh3PDrRTVvPKgULkpJtT4RH10+VA==",
++      "requires": {
++        "safe-buffer": "^5.1.2",
++        "yallist": "^3.0.0"
++      }
++    },
++    "minizlib": {
++      "version": "1.2.1",
++      "resolved": "https://registry.npmjs.org/minizlib/-/minizlib-1.2.1.tgz",
++      "integrity": "sha512-7+4oTUOWKg7AuL3vloEWekXY2/D20cevzsrNT2kGWm+39J9hGTCBv8VI5Pm5lXZ/o3/mdR4f8rflAPhnQb8mPA==",
++      "requires": {
++        "minipass": "^2.2.1"
++      }
+     },
+     "mixin-deep": {
+       "version": "1.3.1",
+@@ -3581,7 +3624,6 @@
+       "version": "0.5.1",
+       "resolved": "https://registry.npmjs.org/mkdirp/-/mkdirp-0.5.1.tgz",
+       "integrity": "sha1-MAV0OOrGz3+MR2fzhkjWaX11yQM=",
+-      "dev": true,
+       "requires": {
+         "minimist": "0.0.8"
+       }
+@@ -4796,6 +4838,20 @@
+       "integrity": "sha1-U10EXOa2Nj+kARcIRimZXp3zJMc=",
+       "dev": true
+     },
++    "tar": {
++      "version": "4.4.8",
++      "resolved": "https://registry.npmjs.org/tar/-/tar-4.4.8.tgz",
++      "integrity": "sha512-LzHF64s5chPQQS0IYBn9IN5h3i98c12bo4NCO7e0sGM2llXQ3p2FGC5sdENN4cTW48O915Sh+x+EXx7XW96xYQ==",
++      "requires": {
++        "chownr": "^1.1.1",
++        "fs-minipass": "^1.2.5",
++        "minipass": "^2.3.4",
++        "minizlib": "^1.1.1",
++        "mkdirp": "^0.5.0",
++        "safe-buffer": "^5.1.2",
++        "yallist": "^3.0.2"
++      }
++    },
+     "to-fast-properties": {
+       "version": "1.0.3",
+       "resolved": "https://registry.npmjs.org/to-fast-properties/-/to-fast-properties-1.0.3.tgz",
+@@ -5075,6 +5131,11 @@
+       "integrity": "sha512-r9S/ZyXu/Xu9q1tYlpsLIsa3EeLXXk0VwlxqTcFRfg9EhMW+17kbt9G0NrgCmhGb5vT2hyhJZLfDGx+7+5Uj/w==",
+       "dev": true
+     },
++    "yallist": {
++      "version": "3.0.3",
++      "resolved": "https://registry.npmjs.org/yallist/-/yallist-3.0.3.tgz",
++      "integrity": "sha512-S+Zk8DEWE6oKpV+vI3qWkaK+jSbIK86pCwe2IF/xwIpQ8jEuxpw9NyaGjmp9+BoJv5FV2piqCDcoCtStppiq2A=="
++    },
+     "yargs": {
+       "version": "12.0.5",
+       "resolved": "https://registry.npmjs.org/yargs/-/yargs-12.0.5.tgz",
+diff --git a/package.json b/package.json
+index 8d3b813..bb95fa3 100644
+--- a/package.json
++++ b/package.json
+@@ -22,6 +22,7 @@
+   },
+   "homepage": "https://github.com/insidesherpa/shiptivity-2#readme",
+   "dependencies": {
++    "better-sqlite3": "^5.4.0",
+     "express": "^4.16.4"
+   },
+   "devDependencies": {
+diff --git a/server.js b/server.js
+index bd1155c..7ba16d7 100644
+--- a/server.js
++++ b/server.js
+@@ -1,4 +1,5 @@
+ import express from 'express';
++import Database from 'better-sqlite3';
+ 
+ const app = express();
+ 
+@@ -8,8 +9,13 @@ app.get('/', (req, res) => {
+   return res.status(200).send({'message': 'SHIPTIVITY API. Read documentation to see API docs'});
+ });
+ 
+-const fs = require('fs');
+-let clients = JSON.parse(fs.readFileSync('db.txt', 'utf8'));
++// We are keeping one connection alive for the rest of the life application for simplicity
++const db = new Database('./clients.db');
++
++// Don't forget to close connection when server gets terminated
++const closeDb = () => db.close();
++process.on('SIGTERM', closeDb);
++process.on('SIGINT', closeDb);
+ 
+ /**
+  * Validate id input
+@@ -25,7 +31,7 @@ const validateId = (id) => {
+       },
+     };
+   }
+-  const client = clients.find(client => client.id === id);
++  const client = db.prepare('select * from clients where id = ? limit 1').get(id);
+   if (!client) {
+     return {
+       valid: false,
+@@ -37,7 +43,6 @@ const validateId = (id) => {
+   }
+   return {
+     valid: true,
+-    client,
+   };
+ }
+ 
+@@ -74,8 +79,11 @@ app.get('/api/v1/clients', (req, res) => {
+         'long_message': 'Status can only be one of the following: [backlog | in-progress | complete].',
+       });
+     }
+-    return res.status(200).send(clients.filter(client => client.status === status));
++    const clients = db.prepare('select * from clients where status = ?').all(status);
++    return res.status(200).send(clients);
+   }
++  const statement = db.prepare('select * from clients');
++  const clients = statement.all();
+   return res.status(200).send(clients);
+ });
+ 
+@@ -85,11 +93,11 @@ app.get('/api/v1/clients', (req, res) => {
+  */
+ app.get('/api/v1/clients/:id', (req, res) => {
+   const id = parseInt(req.params.id , 10);
+-  const { valid, messageObj, client } = validateId(id);
++  const { valid, messageObj } = validateId(id);
+   if (!valid) {
+     res.status(400).send(messageObj);
+   }
+-  return res.status(200).send(client);
++  return res.status(200).send(db.prepare('select * from clients where id = ?').get(id));
+ });
+ 
+ /**
+@@ -108,12 +116,15 @@ app.get('/api/v1/clients/:id', (req, res) => {
+  */
+ app.put('/api/v1/clients/:id', (req, res) => {
+   const id = parseInt(req.params.id , 10);
+-  const { valid, messageObj, client } = validateId(id);
++  const { valid, messageObj } = validateId(id);
+   if (!valid) {
+     res.status(400).send(messageObj);
+   }
+ 
+   let { status, priority } = req.body;
++  let clients = db.prepare('select * from clients').all();
++  const client = clients.find(client => client.id === id);
++
+   /* ---------- Update code below ----------*/
+ 
+ 
+-- 
+2.17.2 (Apple Git-113)
+

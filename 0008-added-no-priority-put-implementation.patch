@@ -1,0 +1,56 @@
+From c4db981544bb6266d6137ac987d56950c88125f2 Mon Sep 17 00:00:00 2001
+From: Samik Shrotriya <ss2659@cornell.edu>
+Date: Fri, 19 Jul 2019 16:30:56 -0400
+Subject: [PATCH 8/9] added no priority put implementation
+
+---
+ clients.db | Bin 8192 -> 8192 bytes
+ server.js  |  21 +++++++++++++--------
+ 2 files changed, 13 insertions(+), 8 deletions(-)
+
+diff --git a/clients.db b/clients.db
+index 5e63cabfb8f5956453ae5876638a77a5ace3ff60..a49623208066a2a6b832234e75eedcd59ad63205 100644
+GIT binary patch
+delta 52
+zcmZp0XmFSy%@{gS#+fm6V?v9hI9CNjsI{}QZg5FrQMQf(kn0BIGEQ!gvSno3Y$<h|
+F6#$3*4ln=!
+
+delta 25
+gcmZp0XmFSy&FDK(#+lJ~V?vAM#D>t#mQu%A0c{2do&W#<
+
+diff --git a/server.js b/server.js
+index 4cf7af5..194b771 100644
+--- a/server.js
++++ b/server.js
+@@ -143,15 +143,20 @@ app.put('/api/v1/clients/:id', (req, res) => {
+       stmt.run([priority, client.id])
+     } else {
+       if (priority < client.priority){
+-        const increment = db.prepare('update clients set priority = priority + 1 where priority >= ? and priority < ?')
+-        increment.run([priority, client.priority])
+-      } else if (priority > client.priority) {
+-        const decrement = db.prepare('update clients set priority = priority - 1 where priority <= ? and priority > ?')
+-        decrement.run([priority, client.priority])
+-      }
+-      const stmt = db.prepare('update clients set priority = ? where id = ?')
+-      stmt.run([priority, client.id])
++      const increment = db.prepare('update clients set priority = priority + 1 where priority >= ? and priority < ?')
++      increment.run([priority, client.priority])
++    } else if (priority > client.priority) {
++      const decrement = db.prepare('update clients set priority = priority - 1 where priority <= ? and priority > ?')        
++      decrement.run([priority, client.priority])
+     } 
++    const stmt = db.prepare('update clients set priority = ? where id = ?')
++    stmt.run([priority, client.id])  
++    }
++  } else {
++    const max = db.prepare('select * from clients where priority= 1 + (select max(priority) from clients where status = ?)').get([status])
++    const setMax = db.prepare('update clients set priority = ? where id = ?')
++    setMax.run([max.priority, client.id])
++    
+   }
+ 
+   if(status){
+-- 
+2.17.2 (Apple Git-113)
+

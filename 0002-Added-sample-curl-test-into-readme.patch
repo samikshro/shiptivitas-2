@@ -1,0 +1,82 @@
+From 7ac3d9a264c81100f6f4207d6a1aa4febcd2b294 Mon Sep 17 00:00:00 2001
+From: Julius Tio <juliusardentio@gmail.com>
+Date: Fri, 8 Feb 2019 13:32:25 +1100
+Subject: [PATCH 2/9] Added sample curl test into readme
+
+---
+ README.markdown | 12 +++++++++++-
+ server.js       | 23 +++++++++++++++++++++--
+ 2 files changed, 32 insertions(+), 3 deletions(-)
+
+diff --git a/README.markdown b/README.markdown
+index b5f64e9..cb847dc 100644
+--- a/README.markdown
++++ b/README.markdown
+@@ -25,4 +25,14 @@ Valid status:
+ - in-progress
+ - complete
+ 
+-`client.priority` should be unique per status. Ordered from 1 to x where priority 1 means most important client.
+\ No newline at end of file
++`client.priority` should be unique per status. Ordered from 1 to x where priority 1 means most important client.
++
++Some sample curl to help you test your code (make sure you restart your server everytime you run this):
++Should do nothing
++### curl -X PUT http://localhost:3001/api/v1/clients/1 -H "Content-Type: application/json" -d '{"status":"in-progress"}'
++
++Should insert the client as lowest priority (biggest number) with status complete
++### curl -X PUT http://localhost:3001/api/v1/clients/1 -H "Content-Type: application/json" -d '{"status":"complete"}'
++
++Should insert the client at the right priority and reorder the priority in clients with different statuses
++### curl -X PUT http://localhost:3001/api/v1/clients/1 -H "Content-Type: application/json" -d '{"status":"complete", "priority": 3}'
+diff --git a/server.js b/server.js
+index f81c685..bd1155c 100644
+--- a/server.js
++++ b/server.js
+@@ -9,7 +9,7 @@ app.get('/', (req, res) => {
+ });
+ 
+ const fs = require('fs');
+-const clients = JSON.parse(fs.readFileSync('db.txt', 'utf8'));
++let clients = JSON.parse(fs.readFileSync('db.txt', 'utf8'));
+ 
+ /**
+  * Validate id input
+@@ -41,6 +41,25 @@ const validateId = (id) => {
+   };
+ }
+ 
++/**
++ * Validate priority input
++ * @param {any} priority
++ */
++const validatePriority = (priority) => {
++  if (Number.isNaN(priority)) {
++    return {
++      valid: false,
++      messageObj: {
++      'message': 'Invalid priority provided.',
++      'long_message': 'Priority can only be positive integer.',
++      },
++    };
++  }
++  return {
++    valid: true,
++  }
++}
++
+ /**
+  * Get all of the clients. Optional filter 'status'
+  * GET /api/v1/clients?status={status} - list all clients, optional parameter status: 'backlog' | 'in-progress' | 'complete'
+@@ -94,7 +113,7 @@ app.put('/api/v1/clients/:id', (req, res) => {
+     res.status(400).send(messageObj);
+   }
+ 
+-  const { status, priority } = req.body;
++  let { status, priority } = req.body;
+   /* ---------- Update code below ----------*/
+ 
+ 
+-- 
+2.17.2 (Apple Git-113)
+
